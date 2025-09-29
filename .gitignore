@@ -1,8 +1,8 @@
 # Yocto Build Artifacts
-build/tmp/
-build/sstate-cache/
-build/cache/
-build/downloads/
+**/tmp/
+**/sstate-cache/
+**/cache/
+**/downloads/
 
 # Python Virtual Environment
 .venv/
