@@ -1,0 +1,3 @@
+[submodule "yocto-de10-standard/meta-intelfpga"]
+	path = yocto-de10-standard/meta-intelfpga
+	url = https://github.com/robseb/meta-intelfpga.git
