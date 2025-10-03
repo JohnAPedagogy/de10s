@@ -1,0 +1,216 @@
+/*
+ * Device Tree Source for Terasic DE10-Standard (Cyclone V SoC)
+ * Based on Intel SoCFPGA GSRD Device Tree
+ */
+
+/dts-v1/;
+#include "socfpga_cyclone5.dtsi"
+
+/ {
+	model = "Terasic DE10 Standard";
+	compatible = "terasic,de10-standard", "altr,socfpga-cyclone5", "altr,socfpga";
+
+	chosen {
+		bootargs = "earlyprintk";
+		stdout-path = "serial0:115200n8";
+	};
+
+	memory@0 {
+		device_type = "memory";
+		reg = <0x0 0x80000000>; /* 2GB DDR3 SDRAM */
+	};
+
+	aliases {
+		ethernet0 = &gmac1;
+		serial0 = &uart0;
+	};
+
+	regulator_3_3v: 3-3-v-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "3.3V";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+	};
+
+	/* FPGA Soft IP components */
+	soc {
+		/* LED PIO */
+		led_pio: gpio@ff200000 {
+			compatible = "altr,pio-1.0";
+			reg = <0xff200000 0x10>;
+			interrupts = <0 40 4>;
+			altr,gpio-bank-width = <10>;
+			altr,interrupt-type = <4>;
+			altr,interrupt_type = <4>;
+			resetvalue = <0>;
+			#gpio-cells = <2>;
+			gpio-controller;
+			gpio-line-names = "LED0", "LED1", "LED2", "LED3", "LED4",
+					  "LED5", "LED6", "LED7", "LED8", "LED9";
+		};
+
+		/* Button PIO */
+		button_pio: gpio@ff200010 {
+			compatible = "altr,pio-1.0";
+			reg = <0xff200010 0x10>;
+			interrupts = <0 41 4>;
+			altr,gpio-bank-width = <4>;
+			altr,interrupt-type = <2>;
+			altr,interrupt_type = <2>;
+			edge_type = <1>;
+			level_trigger = <0>;
+			resetvalue = <0>;
+			#gpio-cells = <2>;
+			gpio-controller;
+			gpio-line-names = "KEY0", "KEY1", "KEY2", "KEY3";
+		};
+
+		/* DIP Switch PIO */
+		dipsw_pio: gpio@ff200020 {
+			compatible = "altr,pio-1.0";
+			reg = <0xff200020 0x10>;
+			interrupts = <0 42 4>;
+			altr,gpio-bank-width = <10>;
+			altr,interrupt-type = <3>;
+			altr,interrupt_type = <3>;
+			edge_type = <1>;
+			level_trigger = <0>;
+			resetvalue = <0>;
+			#gpio-cells = <2>;
+			gpio-controller;
+			gpio-line-names = "SW0", "SW1", "SW2", "SW3", "SW4",
+					  "SW5", "SW6", "SW7", "SW8", "SW9";
+		};
+
+		/* JTAG UART */
+		jtag_uart: serial@ff201000 {
+			compatible = "altr,juart-1.0";
+			reg = <0xff201000 0x8>;
+			interrupts = <0 60 4>;
+		};
+	};
+};
+
+&gmac1 {
+	status = "okay";
+	phy-mode = "rgmii";
+	phy-addr = <0xffffffff>; /* probe for phy addr */
+
+	rxd0-skew-ps = <420>;
+	rxd1-skew-ps = <420>;
+	rxd2-skew-ps = <420>;
+	rxd3-skew-ps = <420>;
+	txen-skew-ps = <0>;
+	txc-skew-ps = <1860>;
+	rxdv-skew-ps = <420>;
+	rxc-skew-ps = <1680>;
+
+	max-frame-size = <3800>;
+};
+
+&gpio0 {
+	status = "okay";
+};
+
+&gpio1 {
+	status = "okay";
+};
+
+&gpio2 {
+	status = "okay";
+};
+
+&i2c0 {
+	status = "okay";
+	clock-frequency = <100000>;
+
+	eeprom@51 {
+		compatible = "atmel,24c32";
+		reg = <0x51>;
+		pagesize = <32>;
+	};
+
+	rtc@68 {
+		compatible = "dallas,ds1307";
+		reg = <0x68>;
+	};
+
+	adxl345@53 {
+		compatible = "adi,adxl345";
+		reg = <0x53>;
+		interrupt-parent = <&portc>;
+		interrupts = <3 2>;
+	};
+};
+
+&i2c1 {
+	status = "okay";
+	clock-frequency = <100000>;
+};
+
+&mmc0 {
+	status = "okay";
+	cd-gpios = <&portb 18 0>;
+	vmmc-supply = <&regulator_3_3v>;
+	vqmmc-supply = <&regulator_3_3v>;
+};
+
+&uart0 {
+	status = "okay";
+};
+
+&usb1 {
+	status = "okay";
+};
+
+&qspi {
+	status = "okay";
+	flash0: n25q00@0 {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		compatible = "micron,n25q00", "jedec,spi-nor";
+		reg = <0>;
+		spi-max-frequency = <100000000>;
+
+		m25p,fast-read;
+		cdns,page-size = <256>;
+		cdns,block-size = <16>;
+		cdns,read-delay = <4>;
+		cdns,tshsl-ns = <50>;
+		cdns,tsd2d-ns = <50>;
+		cdns,tchsh-ns = <4>;
+		cdns,tslch-ns = <4>;
+
+		partitions {
+			compatible = "fixed-partitions";
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			qspi_boot: partition@0 {
+				label = "Boot and fpga data";
+				reg = <0x0 0x4000000>;
+			};
+
+			qspi_rootfs: partition@4000000 {
+				label = "Root Filesystem - JFFS2";
+				reg = <0x4000000 0x4000000>;
+			};
+		};
+	};
+};
+
+&fpga_bridge0 {
+	status = "okay";
+};
+
+&fpga_bridge1 {
+	status = "okay";
+};
+
+&fpga_bridge2 {
+	status = "okay";
+};
+
+&fpga_bridge3 {
+	status = "okay";
+};
